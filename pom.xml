@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<!-- Model version -->
+	<modelVersion>4.0.0</modelVersion>
+
+	<!-- Parent: Spring Boot Starter Parent (using the latest LTS version 3.4.3) -->
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.4.3</version>
+		<relativePath/>
+	</parent>
+
+	<!-- Project coordinates -->
+	<groupId>ai.dataanalytic.apiflow</groupId>
+	<artifactId>api-flow</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>APIFlow</name>
+	<description>Reactive API Framework built with Spring Boot WebFlux and MongoDB</description>
+
+	<!-- Use JDK 21 (latest LTS) -->
+	<properties>
+		<java.version>21</java.version>
+	</properties>
+
+	<!-- Dependencies -->
+	<dependencies>
+		<!-- Spring Boot Starter WebFlux for reactive non-blocking APIs -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
+		<!-- Spring Boot Starter Data MongoDB Reactive for reactive MongoDB integration -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
+		</dependency>
+
+		<!-- Spring Boot Starter Security for future OAuth 2.0 integration -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<!-- SpringDoc OpenAPI Starter for WebFlux UI to generate interactive API documentation -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+			<version>2.0.2</version>
+		</dependency>
+
+		<!-- Lombok for reducing boilerplate code -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- Spring Boot Starter Test for unit and integration testing (JUnit 5) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.junit.vintage</groupId>
+					<artifactId>junit-vintage-engine</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+	</dependencies>
+
+	<!-- Build plugins -->
+	<build>
+		<plugins>
+			<!-- Spring Boot Maven Plugin: Packages the application into an executable jar -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- Maven Surefire Plugin: Attaches the Byte Buddy agent to avoid Mockito self-attachment warnings -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.0.0-M7</version>
+				<configuration>
+					<argLine>
+						-javaagent:"${settings.localRepository}/net/bytebuddy/byte-buddy-agent/1.15.11/byte-buddy-agent-1.15.11.jar"
+					</argLine>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
