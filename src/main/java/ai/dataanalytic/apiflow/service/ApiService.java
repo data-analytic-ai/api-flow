@@ -2,21 +2,19 @@ package ai.dataanalytic.apiflow.service;
 
 import ai.dataanalytic.apiflow.model.Request;
 import ai.dataanalytic.apiflow.model.Response;
+import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import io.github.resilience4j.circuitbreaker.operator.CircuitBreakerOperator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
 
 /**
  * ApiService applies business logic to process incoming requests.
- * It validates the request, performs an external API call with resiliency features,
+ * It validates the request, calls an external API with resiliency features,
  * and maps the result to a Response object.
  */
 @Slf4j
@@ -27,18 +25,14 @@ public class ApiService {
     private final CircuitBreaker circuitBreaker;
 
     /**
-     * Constructor: Initializes WebClient and configures the circuit breaker.
+     * Constructor: Initializes the WebClient and injects the pre-configured CircuitBreaker.
      *
      * @param webClientBuilder WebClient builder injected by Spring.
+     * @param externalServiceCircuitBreaker CircuitBreaker bean from ResilienceConfig.
      */
-    public ApiService(WebClient.Builder webClientBuilder) {
+    public ApiService(WebClient.Builder webClientBuilder, CircuitBreaker externalServiceCircuitBreaker) {
         this.webClient = webClientBuilder.baseUrl("http://external-api.com").build();
-        CircuitBreakerConfig breakerConfig = CircuitBreakerConfig.custom()
-                .failureRateThreshold(50)                              // Open circuit if 50% of calls fail
-                .waitDurationInOpenState(Duration.ofSeconds(10))       // Stay open for 10 seconds
-                .slidingWindowSize(10)                                 // Evaluate the last 10 calls
-                .build();
-        this.circuitBreaker = CircuitBreaker.of("externalService", breakerConfig);
+        this.circuitBreaker = externalServiceCircuitBreaker;
     }
 
     /**
@@ -46,8 +40,11 @@ public class ApiService {
      * <p>
      * Steps:
      * 1. Validate the request data.
-     * 2. Call an external API with timeout, retry, and circuit breaker.
-     * 3. Map the external API result to a Response object.
+     * 2. Call an external API with resiliency features:
+     *    - Timeout: 5 seconds.
+     *    - Retry: 3 attempts with a 1-second delay.
+     *    - Circuit Breaker: Prevents further calls if failures exceed threshold.
+     * 3. Map the result to a Response object.
      * </p>
      *
      * @param request The incoming Request containing business data.
@@ -56,41 +53,24 @@ public class ApiService {
     public Mono<Response> applyBusinessLogic(Request request) {
         log.info("Processing request with data: {}", request.getRequestData());
 
-        // Validate the request data.
         if (request.getRequestData() == null || request.getRequestData().isEmpty()) {
             log.error("Invalid request: Missing request data");
             return Mono.error(new IllegalArgumentException("Request data cannot be empty"));
         }
 
-        // Make an external API call with resiliency features.
         Mono<String> externalCall = webClient.get()
                 .uri("/data?query=" + request.getRequestData())
                 .retrieve()
                 .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(5))                               // Timeout after 5 seconds.
-                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))         // Retry 3 times with 1-second delay.
-                .transformDeferred(CircuitBreakerOperator.of(circuitBreaker));  // Apply circuit breaker.
+                .timeout(Duration.ofSeconds(5))
+                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
+                .transformDeferred(CircuitBreakerOperator.of(circuitBreaker));
 
-        // Map the external call result to a Response object.
         return externalCall.map(data -> {
             Response response = new Response();
             response.setStatus("Processed");
             response.setResponseData("External Data: " + data);
             return response;
-        }).doOnError(e -> log.error("Error during business logic processing: {}", e.getMessage()));
-    }
-
-    /**
-     * Example of handling a blocking operation by offloading it to a dedicated thread pool.
-     *
-     * @param request The incoming Request object.
-     * @return A Mono wrapping the result of the blocking operation.
-     */
-    private Mono<String> handleBlockingOperation(Request request) {
-        return Mono.fromCallable(() -> {
-            log.info("Executing blocking operation for data: {}", request.getRequestData());
-            Thread.sleep(3000); // Simulate a blocking delay.
-            return "Blocking data for " + request.getRequestData();
-        }).subscribeOn(Schedulers.boundedElastic());
+        }).doOnError(e -> log.error("Error processing business logic: {}", e.getMessage()));
     }
 }

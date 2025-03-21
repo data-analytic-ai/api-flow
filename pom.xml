@@ -73,6 +73,35 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
+		<!-- Resilience4j Circuit Breaker for managing external API call failures -->
+		<dependency>
+			<groupId>io.github.resilience4j</groupId>
+			<artifactId>resilience4j-circuitbreaker</artifactId>
+			<version>1.7.1</version>
+		</dependency>
+
+		<!-- Resilience4j Retry for automatically retrying transient failures -->
+		<dependency>
+			<groupId>io.github.resilience4j</groupId>
+			<artifactId>resilience4j-retry</artifactId>
+			<version>1.7.1</version>
+		</dependency>
+
+		<!-- Resilience4j Reactor integration to work with reactive streams -->
+		<dependency>
+			<groupId>io.github.resilience4j</groupId>
+			<artifactId>resilience4j-reactor</artifactId>
+			<version>1.7.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+
 	</dependencies>
 
 	<!-- Build plugins -->
