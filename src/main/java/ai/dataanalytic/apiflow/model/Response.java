@@ -9,5 +9,5 @@ import lombok.Data;
 @Data
 public class Response {
     private String status;
-    private String responseData;
+    private String responseMessage;
 }

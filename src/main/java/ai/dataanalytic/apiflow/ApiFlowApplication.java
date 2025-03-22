@@ -6,12 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Main entry point for the APIFlow application.
- * Bootstraps the Spring Boot application using WebFlux for reactive, non-blocking API development.
+ * Bootstraps the Spring Boot WebFlux application.
  */
 @Slf4j
 @SpringBootApplication
 public class ApiFlowApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(ApiFlowApplication.class, args);
 		log.info("APIFlow Application Started Successfully!");
